@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Pay — NeverminedPay Demo</title>
+  <style>
+    :root {
+      --nvm-teal: #0D3F48;
+      --nvm-teal-light: #E8F8F7;
+      --nvm-lime: #A3E635;
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --muted: #6b7280;
+      --text: #1f2937;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--card);
+    }
+    .header-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--nvm-teal), var(--nvm-lime));
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 16px;
+    }
+    .header-title { font-size: 16px; font-weight: 600; }
+    .header-subtitle { font-size: 12px; color: var(--muted); }
+    .messages {
+      flex: 1; overflow-y: auto; padding: 24px;
+      display: flex; flex-direction: column; gap: 16px;
+      max-width: 720px; margin: 0 auto; width: 100%;
+    }
+    .msg {
+      max-width: 85%; padding: 10px 16px; border-radius: 16px;
+      font-size: 14px; line-height: 1.6; white-space: pre-wrap;
+    }
+    .msg-user { align-self: flex-end; background: var(--nvm-teal-light); }
+    .msg-agent { align-self: flex-start; background: var(--card); border: 1px solid var(--border); }
+    .msg-system {
+      align-self: center; background: #fef3c7; border: 1px solid #fde68a;
+      color: #92400e; font-size: 13px; text-align: center; border-radius: 12px; padding: 12px 20px;
+    }
+    .msg-error {
+      align-self: center; background: #fee2e2; border: 1px solid #fca5a5;
+      color: #991b1b; font-size: 13px; text-align: center; border-radius: 12px; padding: 12px 20px;
+    }
+    .msg-success {
+      align-self: center; background: #d1fae5; border: 1px solid #6ee7b7;
+      color: #065f46; font-size: 13px; text-align: center; border-radius: 12px; padding: 12px 20px;
+    }
+    .pay-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+      padding: 8px 20px; background: var(--nvm-teal); color: white; border: none;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .pay-btn:hover { opacity: 0.85; }
+    .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pay-btn svg { width: 14px; height: 14px; }
+    .typing {
+      align-self: flex-start; display: flex; gap: 4px; padding: 12px 18px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    }
+    .typing span {
+      width: 7px; height: 7px; background: #9ca3af; border-radius: 50%;
+      animation: bounce 1.4s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+    .input-area { border-top: 1px solid var(--border); padding: 16px 24px; background: var(--card); }
+    .input-row { display: flex; gap: 10px; max-width: 720px; margin: 0 auto; }
+    .input-row textarea {
+      flex: 1; resize: none; border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 16px; font-size: 14px; font-family: inherit; outline: none;
+      min-height: 42px; max-height: 120px; field-sizing: content;
+    }
+    .input-row textarea:focus { border-color: var(--nvm-teal); }
+    .send-btn {
+      width: 42px; height: 42px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, var(--nvm-teal), #2d7a6e);
+      color: white; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .send-btn svg { width: 18px; height: 18px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-logo">N</div>
+    <div>
+      <div class="header-title">Chat screen</div>
+      <div class="header-subtitle">NeverminedPay Widget Demo</div>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="msg msg-agent">Hi! I'm an AI assistant powered by a Nevermined-protected agent. Ask me anything.</div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="input" placeholder="Ask the agent..." rows="1"></textarea>
+      <button class="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- In production: <script src="https://pay.nevermined.app/widget.js"></script> -->
+  <script crossorigin src="http://localhost:4200/widget.js"></script>
+
+  <script>
+    var messagesEl = document.getElementById('messages');
+    var inputEl = document.getElementById('input');
+    var accessToken = null;
+    var appConfig = null;
+
+    fetch('/api/config').then(r => r.json()).then(c => { appConfig = c; });
+
+    inputEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+    function addMessage(text, cls) {
+      var el = document.createElement('div');
+      el.className = 'msg ' + cls;
+      el.innerHTML = text;
+      messagesEl.appendChild(el);
+      scrollToBottom();
+      return el;
+    }
+
+    function addTyping() {
+      var el = document.createElement('div');
+      el.className = 'typing'; el.id = 'typing';
+      el.innerHTML = '<span></span><span></span><span></span>';
+      messagesEl.appendChild(el); scrollToBottom();
+    }
+
+    function removeTyping() { var el = document.getElementById('typing'); if (el) el.remove(); }
+
+    var cardIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
+
+    async function callAgent(query, token) {
+      var headers = { 'Content-Type': 'application/json' };
+      if (token) headers['payment-signature'] = token;
+
+      var resp = await fetch('/ask', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ query: query }),
+      });
+
+      if (resp.status === 402) {
+        var planId, agentId;
+        var prHeader = resp.headers.get('payment-required');
+        if (prHeader) {
+          try {
+            var decoded = JSON.parse(atob(prHeader));
+            // x402 v2: planId and agentId are inside accepts[0]
+            var accepted = decoded.accepts && decoded.accepts[0];
+            if (accepted) {
+              planId = accepted.planId;
+              agentId = accepted.extra && accepted.extra.agentId;
+            }
+          } catch(e) {}
+        }
+        return { status: 'payment_required', planId: planId, agentId: agentId };
+      }
+
+      if (!resp.ok) {
+        return { status: 'error', error: 'HTTP ' + resp.status };
+      }
+
+      var data = await resp.json();
+      return { status: 'success', response: data.response };
+    }
+
+    async function sendMessage() {
+      var text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = '';
+      addMessage(text, 'msg-user');
+      addTyping();
+
+      try {
+        var result = await callAgent(text, accessToken);
+        removeTyping();
+
+        if (result.status === 'payment_required') {
+          var payMsg = addMessage(
+            'The agent requires a paid plan to answer your query.\n\n' +
+            '<strong>HTTP 402 — Payment Required</strong>\n' +
+            'You need to purchase credits before the agent can respond.',
+            'msg-system'
+          );
+          var btn = document.createElement('button');
+          btn.className = 'pay-btn';
+          btn.innerHTML = cardIcon + ' Purchase credits';
+          btn.onclick = function() { openCheckout(btn, result.agentId, result.planId, text); };
+          payMsg.appendChild(btn);
+
+        } else if (result.status === 'success') {
+          addMessage(result.response, 'msg-agent');
+
+        } else {
+          addMessage('Error: ' + (result.error || 'Unknown error'), 'msg-error');
+        }
+      } catch (err) {
+        removeTyping();
+        addMessage('Network error: ' + err.message, 'msg-error');
+      }
+    }
+
+    async function openCheckout(btn, agentIdFrom402, planId, originalQuery) {
+      btn.disabled = true;
+      btn.textContent = 'Opening checkout...';
+
+      var agentId = agentIdFrom402 || (appConfig && appConfig.agentId);
+      var externalId = appConfig && appConfig.externalId;
+
+      if (!agentId) {
+        addMessage('No agent ID available. Set NVM_AGENT_ID in .env', 'msg-error');
+        btn.disabled = false;
+        btn.innerHTML = cardIcon + ' Purchase credits';
+        return;
+      }
+
+      try {
+        var opts = { agentId: agentId };
+        if (planId) opts.planId = planId;
+        if (externalId) opts.externalId = externalId;
+
+        var result = await NeverminedPay.open(opts);
+
+        btn.remove();
+        accessToken = result.accessToken;
+        console.log('[Demo] Widget result:', JSON.stringify(result));
+        console.log('[Demo] accessToken length:', accessToken ? accessToken.length : 'null');
+
+        if (accessToken) {
+          addMessage('Payment successful! Retrying your query...', 'msg-success');
+          addTyping();
+          var retry = await callAgent(originalQuery, accessToken);
+          removeTyping();
+
+          if (retry.status === 'success') {
+            addMessage(retry.response, 'msg-agent');
+          } else {
+            addMessage('Retry failed: ' + JSON.stringify(retry), 'msg-error');
+          }
+        } else {
+          addMessage('Payment successful! But no access token was returned — the agent may need a different auth flow.', 'msg-system');
+        }
+
+      } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = cardIcon + ' Purchase credits';
+        addMessage('Checkout was closed. Click the button above to try again.', 'msg-system');
+      }
+    }
+  </script>
+</body>
+</html>
