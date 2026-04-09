@@ -3,7 +3,10 @@
  *
  * Usage:
  *   <script src="https://pay.nevermined.app/widget.js"></script>
+ *   // Agent mode — loads all plans for the agent
  *   const result = await NeverminedPay.open({ agentId: 'did:nv:abc...', externalId: 'user-123' });
+ *   // Plan-only mode — loads a single plan directly
+ *   const result = await NeverminedPay.open({ planId: '123...', externalId: 'user-123' });
  *   // result = { accessToken, planId }
  */
 (function () {
@@ -24,8 +27,8 @@
   var activeOverlay = null;
 
   function open(options) {
-    if (!options || !options.agentId) {
-      return Promise.reject(new Error('NeverminedPay.open requires { agentId }'));
+    if (!options || (!options.agentId && !options.planId)) {
+      return Promise.reject(new Error('NeverminedPay.open requires { agentId } or { planId }'));
     }
 
     if (activeOverlay) {
@@ -35,9 +38,9 @@
     return new Promise(function (resolve, reject) {
       // Build iframe URL
       var params = new URLSearchParams();
-      params.set('agentId', options.agentId);
-      params.set('origin', window.location.origin);
+      if (options.agentId) params.set('agentId', options.agentId);
       if (options.planId) params.set('planId', options.planId);
+      params.set('origin', window.location.origin);
       if (options.externalId) params.set('externalId', options.externalId);
 
       var iframeSrc = WIDGET_ORIGIN + '/embed/checkout?' + params.toString();

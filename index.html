@@ -238,15 +238,16 @@
       var agentId = agentIdFrom402 || (appConfig && appConfig.agentId);
       var externalId = appConfig && appConfig.externalId;
 
-      if (!agentId) {
-        addMessage('No agent ID available. Set NVM_AGENT_ID in .env', 'msg-error');
+      if (!agentId && !planId) {
+        addMessage('No agent ID or plan ID available. Set NVM_PLAN_ID (or NVM_AGENT_ID) in .env', 'msg-error');
         btn.disabled = false;
         btn.innerHTML = cardIcon + ' Purchase credits';
         return;
       }
 
       try {
-        var opts = { agentId: agentId };
+        var opts = {};
+        if (agentId) opts.agentId = agentId;
         if (planId) opts.planId = planId;
         if (externalId) opts.externalId = externalId;
 
